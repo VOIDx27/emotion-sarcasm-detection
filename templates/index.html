@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion-Aware Sarcasm Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🎭</span>
+                    <div>
+                        <h1>Emotion-Aware Sarcasm Detection</h1>
+                        <p class="subtitle">Minor Project (EGR4501) | GD Goenka University | Session 2026-27</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="evalBtn" class="btn btn-outline" onclick="showEvaluation()">
+                        📊 Evaluation Results
+                    </button>
+                    <button id="infoBtn" class="btn btn-outline" onclick="showInfo()">
+                        ℹ️ About
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container main-content">
+        <!-- Input Section -->
+        <section class="card input-card">
+            <h2>📝 Enter Text to Analyse</h2>
+            <div class="input-group">
+                <textarea id="inputText" placeholder="Type or paste an English sentence or short passage here..." 
+                          maxlength="500" rows="4"></textarea>
+                <div class="input-footer">
+                    <span id="charCount" class="char-count">0 / 500</span>
+                    <button id="analyseBtn" class="btn btn-primary" onclick="analyseText()">
+                        🔍 Analyse
+                    </button>
+                </div>
+            </div>
+            <div class="example-texts">
+                <span class="examples-label">Try examples:</span>
+                <button class="btn btn-chip" onclick="setExample('What a great day to be stuck in traffic for three hours!')">
+                    Sarcastic example
+                </button>
+                <button class="btn btn-chip" onclick="setExample('The new park downtown is beautiful and family-friendly.')">
+                    Non-sarcastic example
+                </button>
+                <button class="btn btn-chip" onclick="setExample('Oh wonderful, another meeting that could have been an email.')">
+                    Workplace sarcasm
+                </button>
+                <button class="btn btn-chip" onclick="setExample('Scientists discover high speed internet warming up the earth by 0.5 degrees')">
+                    Headline sarcasm
+                </button>
+            </div>
+        </section>
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Analysing text...</p>
+        </div>
+
+        <!-- Error Display -->
+        <div id="errorDisplay" class="card error-card hidden">
+            <h3>⚠️ Error</h3>
+            <p id="errorMessage"></p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="hidden">
+            <!-- Emotion Analysis -->
+            <section class="card emotion-card">
+                <h2>🎭 Emotion Analysis</h2>
+                <p class="section-note">Estimated emotion category — not a verified emotional state.</p>
+                <div class="emotion-result">
+                    <div class="emotion-label-display">
+                        <span class="emotion-badge" id="emotionLabel">-</span>
+                        <span class="emotion-time" id="emotionTime"></span>
+                    </div>
+                    <div class="emotion-bars" id="emotionBars"></div>
+                </div>
+            </section>
+
+            <!-- Model Comparison -->
+            <section class="comparison-section">
+                <h2>🔬 Sarcasm Detection Results</h2>
+                <div class="comparison-grid">
+                    <!-- Baseline Model -->
+                    <div class="card model-card" id="baselineCard">
+                        <div class="model-header">
+                            <h3>📄 Text-Only Baseline</h3>
+                            <span class="model-tag">TF-IDF + LogReg</span>
+                        </div>
+                        <div class="prediction-display" id="baselinePrediction">
+                            <span class="prediction-label" id="baselineLabel">-</span>
+                            <div class="confidence-bar-container">
+                                <div class="confidence-bar" id="baselineConfidenceBar"></div>
+                            </div>
+                            <span class="confidence-text" id="baselineConfidence">-</span>
+                        </div>
+                        <div class="model-probs" id="baselineProbs"></div>
+                        <span class="model-time" id="baselineTime"></span>
+                    </div>
+
+                    <!-- VS Badge -->
+                    <div class="vs-badge">VS</div>
+
+                    <!-- Emotion-Aware Model -->
+                    <div class="card model-card" id="emotionAwareCard">
+                        <div class="model-header">
+                            <h3>🧠 Emotion-Aware Model</h3>
+                            <span class="model-tag">TF-IDF + Emotion + LogReg</span>
+                        </div>
+                        <div class="prediction-display" id="emotionAwarePrediction">
+                            <span class="prediction-label" id="emotionAwareLabel">-</span>
+                            <div class="confidence-bar-container">
+                                <div class="confidence-bar" id="emotionAwareConfidenceBar"></div>
+                            </div>
+                            <span class="confidence-text" id="emotionAwareConfidence">-</span>
+                        </div>
+                        <div class="model-probs" id="emotionAwareProbs"></div>
+                        <span class="model-time" id="emotionAwareTime"></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Limitation Notice (FR-6.2) -->
+            <section class="card limitation-card">
+                <h3>⚠️ Limitation Notice</h3>
+                <p id="limitationNotice"></p>
+            </section>
+        </div>
+
+        <!-- Evaluation Modal -->
+        <div id="evalModal" class="modal hidden">
+            <div class="modal-content card">
+                <div class="modal-header">
+                    <h2>📊 Model Evaluation Results</h2>
+                    <button class="btn-close" onclick="closeModal('evalModal')">&times;</button>
+                </div>
+                <div id="evalContent" class="modal-body">
+                    <div class="spinner"></div>
+                    <p>Loading evaluation results...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Modal -->
+        <div id="infoModal" class="modal hidden">
+            <div class="modal-content card">
+                <div class="modal-header">
+                    <h2>ℹ️ About This System</h2>
+                    <button class="btn-close" onclick="closeModal('infoModal')">&times;</button>
+                </div>
+                <div id="infoContent" class="modal-body">
+                    <div class="spinner"></div>
+                    <p>Loading system information...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>
+                <strong>Emotion-Aware Sarcasm Detection System</strong> | 
+                Department of Computer Science &amp; Engineering | 
+                School of Engineering and Sciences | 
+                GD Goenka University, Gurugram
+            </p>
+            <p class="footer-team">
+                Soham Bhole • Gaurav Kumar • Rishit Choudhary • Mohd Afnan | 
+                Supervisor: Dr Yogesh Kumar
+            </p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
